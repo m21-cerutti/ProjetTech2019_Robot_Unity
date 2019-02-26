@@ -101,15 +101,7 @@ public class Client : MonoBehaviour
         {
             Debug.LogError("Unexpected exception : " + e.ToString());
         }
-
-        if (sender != null && sender.Connected)
-        {
-            sender.Disconnect(false);
-            Debug.Log("Disconnected!");
-        }
-        sender.Close();
     }
-
 
     void stopClient()
     {
@@ -118,12 +110,26 @@ public class Client : MonoBehaviour
         //stop thread
         if (SocketThread != null)
         {
-            SocketThread.Abort();
+            if (sender != null && sender.Connected)
+            {
+                sender.Disconnect(false);
+                Debug.Log("Disconnected!");
+                sender.Close();
+            }
+            SocketThread.Interrupt();
         }
     }
 
     void OnDisable()
     {
         stopClient();
+    }
+
+    void OnDestroy()
+    {
+        if (SocketThread != null)
+        {
+            SocketThread.Abort();
+        }
     }
 }
