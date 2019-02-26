@@ -44,7 +44,7 @@ public class Client : MonoBehaviour
     }
 
     public string adressIp = "192.168.0.40";
-    public int port = 5660;
+    public int port = 5260;
     Socket sender;
     Socket handler;
 

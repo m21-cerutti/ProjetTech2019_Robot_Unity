@@ -297,7 +297,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   adressIp: 192.168.0.40
-  port: 5660
+  port: 5260
 --- !u!1 &1318026935
 GameObject:
   m_ObjectHideFlags: 0
