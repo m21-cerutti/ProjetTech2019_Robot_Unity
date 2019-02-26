@@ -12,7 +12,7 @@ using System.Text;
 public class Client : MonoBehaviour
 {
     System.Threading.Thread SocketThread;
-    volatile bool keepReading = false;
+    volatile bool keepReading = true;
 
     // Use this for initialization
     void Start()
@@ -81,14 +81,13 @@ public class Client : MonoBehaviour
                 // Send the data through the socket.  
                 int bytesSent = sender.Send(msg);
 
-                // Receive the response from the remote device.  
+                // Receive the response from the remote device. Block.  
                 int bytesRec = sender.Receive(bytes);
                 Debug.Log("Echoed test = " + Encoding.ASCII.GetString(bytes, 0, bytesRec));
             }
 
             // Release the socket.  
             sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
         }
         catch (ArgumentNullException ane)
         {
@@ -102,6 +101,13 @@ public class Client : MonoBehaviour
         {
             Debug.LogError("Unexpected exception : " + e.ToString());
         }
+
+        if (sender != null && sender.Connected)
+        {
+            sender.Disconnect(false);
+            Debug.Log("Disconnected!");
+        }
+        sender.Close();
     }
 
 
@@ -113,12 +119,6 @@ public class Client : MonoBehaviour
         if (SocketThread != null)
         {
             SocketThread.Abort();
-        }
-
-        if (sender != null && sender.Connected)
-        {
-            sender.Disconnect(false);
-            Debug.Log("Disconnected!");
         }
     }
 

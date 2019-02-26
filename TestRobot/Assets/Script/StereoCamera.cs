@@ -57,7 +57,7 @@ public class StereoCamera : MonoBehaviour
     }
 
 }
-
+/*
 [CustomEditor(typeof(StereoCamera))]
 public class LevelScriptEditor : Editor
 {
@@ -82,3 +82,4 @@ public class LevelScriptEditor : Editor
         }
     }
 }
+*/
