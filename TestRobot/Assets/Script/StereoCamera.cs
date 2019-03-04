@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -12,12 +13,46 @@ public class StereoCamera : MonoBehaviour
     [SerializeField]
     private float distance_cam = 0.5f;
 
-    void Start()
+	ConcurrentQueue<byte[]> block_queue;
+	ConcurrentBag<BitArray> cameraLeft;
+	ConcurrentBag<BitArray> cameraRight;
+
+	byte[] trash;
+
+	public float refreshTime = 20f;
+	public int bufferSize = 5;
+	private float timer;
+
+	void Start()
     {
         SetCamerasDistance();
-    }
 
-    public void SetCamerasDistance()
+		trash = new byte[GetCameraLeft().Length];
+
+	}
+
+	void Update()
+	{
+		if (timer<0)
+		{
+			block_queue.Enqueue(GetCameraLeft());
+			block_queue.Enqueue(GetCameraRight());
+
+			timer = refreshTime;
+		}
+		else
+		{
+			timer -= Time.deltaTime;
+		}
+		
+		if (block_queue.Count > bufferSize)
+		{
+			block_queue.TryDequeue(out trash);
+			block_queue.TryDequeue(out trash);
+		}
+	}
+
+	public void SetCamerasDistance()
     {
         //Distance beetween eyes
         right_cam.transform.localPosition = new Vector3(distance_cam, 0);

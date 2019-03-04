@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+
 using UnityEngine;
+
 using System;
 using System.Threading;
 using System.IO;
@@ -9,16 +11,20 @@ using System.Net.Sockets;
 using System.Configuration;
 using System.Text;
 
+[RequireComponent(typeof(StereoCamera))]
 public class Client : MonoBehaviour
 {
     System.Threading.Thread SocketThread;
     volatile bool keepReading = true;
 
+	StereoCamera cameras;
+
     // Use this for initialization
     void Start()
     {
         Application.runInBackground = true;
-        startClient();
+		cameras = GetComponent<StereoCamera>();
+		startClient();
     }
 
     void startClient()
@@ -73,18 +79,25 @@ public class Client : MonoBehaviour
             sender.Connect(remoteEndPoint);
             Debug.Log("Socket connected to " + sender.RemoteEndPoint.ToString());
 
-            while (keepReading)
+			byte[] msg = Encoding.ASCII.GetBytes("echo; test to resend.<EOF>");
+			int bytesSent = sender.Send(msg);
+
+			IList<ArraySegment<byte>> cmdStart = new List<ArraySegment<byte>>();
+			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("start;")));
+			cmdStart.Add(new ArraySegment<byte>(cameras.GetCameraLeft()));
+			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(";")));
+			cmdStart.Add(new ArraySegment<byte>(cameras.GetCameraRight()));
+			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(";<EOF>")));
+			int bytesSentStart = sender.Send(cmdStart);
+
+			while (keepReading)
             {
-                // Encode the data string into a byte array.  
-                byte[] msg = Encoding.ASCII.GetBytes("This is a test<EOF>");
+				// Receive the response from the remote device. Block.  
+				int bytesRec = sender.Receive(bytes);
 
-                // Send the data through the socket.  
-                int bytesSent = sender.Send(msg);
-
-                // Receive the response from the remote device. Block.  
-                int bytesRec = sender.Receive(bytes);
-                Debug.Log("Echoed test = " + Encoding.ASCII.GetString(bytes, 0, bytesRec));
-            }
+				//Parse command
+				parseCommand(bytes, bytesRec);
+			}
 
             // Release the socket.  
             sender.Shutdown(SocketShutdown.Both);
@@ -102,6 +115,12 @@ public class Client : MonoBehaviour
             Debug.LogError("Unexpected exception : " + e.ToString());
         }
     }
+
+	void parseCommand(byte[] bytes, int end)
+	{
+		String cmd = Encoding.ASCII.GetString(bytes, 0, end);
+		Debug.Log("Command debug = " + cmd);
+	}
 
     void stopClient()
     {
