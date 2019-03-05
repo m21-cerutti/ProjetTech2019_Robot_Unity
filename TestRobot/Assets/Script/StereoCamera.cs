@@ -6,6 +6,41 @@ using UnityEngine;
 
 public class StereoCamera : MonoBehaviour
 {
+   
+    static readonly object _cameras = new object();
+    private byte[] cameraLeft;
+    private byte[] cameraRight;
+
+    public byte[][] getCamerasImages()
+    {
+        lock (_cameras)
+        {
+            byte[][] cameras = new byte[2][];
+            cameras[0] = cameraLeft;
+            cameras[1] = cameraRight;
+            return cameras;
+        }
+    }
+
+    private void computeCameraLeft()
+    {
+        cameraLeft = GetCameraImage(left_cam);
+    }
+
+    private void computeCameraRight()
+    {
+        cameraRight = GetCameraImage(right_cam);
+    }
+
+    private void computeCamerasImages()
+    {
+        lock (_cameras)
+        {
+            computeCameraLeft();
+            computeCameraRight();
+        }
+    }
+
     [SerializeField]
     private Camera left_cam;
     [SerializeField]
@@ -13,43 +48,28 @@ public class StereoCamera : MonoBehaviour
     [SerializeField]
     private float distance_cam = 0.5f;
 
-	ConcurrentQueue<byte[]> block_queue;
-	ConcurrentBag<BitArray> cameraLeft;
-	ConcurrentBag<BitArray> cameraRight;
-
-	byte[] trash;
-
-	public float refreshTime = 20f;
-	public int bufferSize = 5;
+    public float refreshTime = 20f;
 	private float timer;
 
-	void Start()
+
+    void Start()
     {
         SetCamerasDistance();
-
-		trash = new byte[GetCameraLeft().Length];
-
-	}
+        timer = refreshTime;
+        computeCamerasImages();
+    }
 
 	void Update()
 	{
-		if (timer<0)
-		{
-			block_queue.Enqueue(GetCameraLeft());
-			block_queue.Enqueue(GetCameraRight());
-
-			timer = refreshTime;
-		}
-		else
-		{
-			timer -= Time.deltaTime;
-		}
-		
-		if (block_queue.Count > bufferSize)
-		{
-			block_queue.TryDequeue(out trash);
-			block_queue.TryDequeue(out trash);
-		}
+        if (timer < 0)
+        {
+            computeCamerasImages();
+            timer = refreshTime;
+        }
+        else
+        {
+            timer -= Time.deltaTime;
+        }
 	}
 
 	public void SetCamerasDistance()
@@ -57,7 +77,6 @@ public class StereoCamera : MonoBehaviour
         //Distance beetween eyes
         right_cam.transform.localPosition = new Vector3(distance_cam, 0);
         left_cam.transform.localPosition = new Vector3(-distance_cam, 0);
-
     }
 
     private byte[] GetCameraImage(Camera cam)
@@ -78,20 +97,8 @@ public class StereoCamera : MonoBehaviour
 
         return bytes;
     }
-
-    public byte[] GetCameraLeft()
-    {
-        Debug.Log("GetCameraLeft");
-        return GetCameraImage(left_cam);
-    }
-
-    public byte[] GetCameraRight()
-    {
-        Debug.Log("GetCameraRight");
-        return GetCameraImage(right_cam);
-    }
-
 }
+
 /*
 [CustomEditor(typeof(StereoCamera))]
 public class LevelScriptEditor : Editor

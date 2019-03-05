@@ -54,12 +54,108 @@ public class Client : MonoBehaviour
     Socket sender;
     Socket handler;
 
+    void echoCommand(string message)
+    {
+        Debug.Log("Resend: " + message);
+        sender.Send(Encoding.ASCII.GetBytes("r_echo;" + message+ "<EOF>"));
+    }
+
+    private void rechoCommand(string data)
+    {
+        Debug.Log("Return echo complete: " + data);
+    }
+
+    void refreshCommand(string number)
+    {
+        int value;
+        try
+        {
+            value = int.Parse(number);
+            Debug.Log("New value refresh :" + value);
+        }
+        catch(Exception e)
+        {
+            Debug.LogError(e.ToString());
+        }
+    }
+
+    void sendLargeFile(string identifier, byte[] data)
+    {
+        IList<ArraySegment<byte>> cmd = new List<ArraySegment<byte>>();
+        cmd.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(identifier + ":"+data.Length+";")));
+        cmd.Add(new ArraySegment<byte>(data));
+        cmd.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("<EOF>")));
+        int bytesSentStart = sender.Send(cmd);
+    }
+
+    void sendCamerasCommand()
+    {
+        byte[][] images = cameras.getCamerasImages();
+        int bytesSentStart = sender.Send(Encoding.ASCII.GetBytes("stereo;"));
+        sendLargeFile("left", images[0]);
+        sendLargeFile("right", images[1]);
+    }
+
+    private void receiveImageCommand(string cmd, string data, byte[] bytes, int nbread)
+    {
+        Debug.Log(cmd);
+        Debug.Log(data);
+    }
+
+    int parseCommand(byte[] bytes, int nbread)
+    {
+        string buff = Encoding.ASCII.GetString(bytes, 0, nbread);
+
+        int endCommand = 0;
+        while((endCommand = buff.IndexOf("<EOF>")) > 0)
+        {
+            //Debug.Log("buff debug = " + buff);
+
+            string cmd = buff.Substring(0, endCommand);
+            Debug.Log("Command debug = " + cmd);
+
+            buff = buff.Remove(0, endCommand + "<EOF>".Length);
+            //Debug.Log("newbuff debug = " + buff);
+
+            if (cmd.Equals(""))
+                throw new Exception("Server shutdown.");
+
+            int beginData = cmd.IndexOf(";")+1;
+            string data = cmd.Substring(beginData);
+            Debug.Log("Data debug = "+ data);
+
+            if (cmd.StartsWith("echo"))
+            {
+                echoCommand(data);
+            }
+            else if (cmd.StartsWith("r_echo"))
+            {
+                rechoCommand(data);
+            }
+            else if (cmd.StartsWith("req_img"))
+            {
+                sendCamerasCommand();
+            }
+            else if (cmd.StartsWith("img"))
+            {
+                receiveImageCommand(cmd, data, bytes, nbread);
+            }
+            else if (cmd.StartsWith("refresh"))
+            {
+                refreshCommand(data);
+            }
+            else
+            {
+                throw new Exception("Illegal instruction.");
+            }
+        }
+        return 0;
+    }
+
     void networkCode()
     {
-        string data;
-
         // Data buffer for incoming data.
-        byte[] bytes = new Byte[1024];
+        byte[] bytes = new byte[1024];
 
         // host running the application.
         Debug.Log("Locals Ip " + getIPAddress().ToString());
@@ -71,32 +167,26 @@ public class Client : MonoBehaviour
         sender = new Socket(ipArray[0].AddressFamily,
             SocketType.Stream, ProtocolType.Tcp);
 
-        // Bind the socket to the local endpoint and 
-        // listen for incoming connections.
-
         try
         {
             sender.Connect(remoteEndPoint);
             Debug.Log("Socket connected to " + sender.RemoteEndPoint.ToString());
 
-			byte[] msg = Encoding.ASCII.GetBytes("echo; test to resend.<EOF>");
-			int bytesSent = sender.Send(msg);
+            //Send refresh req
+            int bytesSentStart = sender.Send(Encoding.ASCII.GetBytes("start;" + cameras.refreshTime.ToString() + ";<EOF>"));
 
-			IList<ArraySegment<byte>> cmdStart = new List<ArraySegment<byte>>();
-			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes("start;")));
-			cmdStart.Add(new ArraySegment<byte>(cameras.GetCameraLeft()));
-			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(";")));
-			cmdStart.Add(new ArraySegment<byte>(cameras.GetCameraRight()));
-			cmdStart.Add(new ArraySegment<byte>(Encoding.ASCII.GetBytes(";<EOF>")));
-			int bytesSentStart = sender.Send(cmdStart);
-
-			while (keepReading)
+            while (keepReading)
             {
-				// Receive the response from the remote device. Block.  
-				int bytesRec = sender.Receive(bytes);
+                // Receive the response from the remote device. Block.  
+                int nbread = sender.Receive(bytes);
 
-				//Parse command
-				parseCommand(bytes, bytesRec);
+                //Parse command
+                parseCommand(bytes, nbread);
+                
+                if (nbread == 0)
+                {
+                    keepReading = false;
+                }
 			}
 
             // Release the socket.  
@@ -115,12 +205,6 @@ public class Client : MonoBehaviour
             Debug.LogError("Unexpected exception : " + e.ToString());
         }
     }
-
-	void parseCommand(byte[] bytes, int end)
-	{
-		String cmd = Encoding.ASCII.GetString(bytes, 0, end);
-		Debug.Log("Command debug = " + cmd);
-	}
 
     void stopClient()
     {
