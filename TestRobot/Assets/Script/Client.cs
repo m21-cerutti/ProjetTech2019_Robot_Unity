@@ -35,13 +35,17 @@ public class Client : MonoBehaviour
         SocketThread.Start();
     }
 
-	private byte[] getInteger(int value)
+	private byte[] getIntegerBytes(int value)
 	{
 		return BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value));
 	}
 
-	private int toInteger(byte[] value, int offset)
+	private int BytestoInteger(byte[] value, int offset)
 	{
+		if(value.Length < sizeof(Int32))
+		{
+			throw new Exception("Not enough bytes to convert.");
+		}
 		return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(value, offset));
 	}
 
@@ -67,16 +71,18 @@ public class Client : MonoBehaviour
 	int size_command;
 
 	
-	int parseCommand(byte[] data)
+	void parseCommand(byte[] command)
 	{
-		if(data.Length == 0)
+		if(command.Length == 0)
 		{
-			Debug.LogError("Size 0");
+			Debug.LogError("Size 0.");
 		}
 		
-		string cmd = Encoding.ASCII.GetString(data, 0, data.Length);
+		string cmd = Encoding.ASCII.GetString(command, 0, command.Length);
 		Debug.Log("Command read = " + cmd);
-		/*
+
+		byte[] data = command.Skip(1).ToArray();
+
 		//send echo
 		if (cmd.StartsWith("e"))
 		{
@@ -101,8 +107,66 @@ public class Client : MonoBehaviour
 		{
 			throw new Exception("Illegal instruction.");
 		}
-		*/
-		return 0;
+	}
+
+	void inEchoCommand(byte[] data)
+	{
+		string message = Encoding.ASCII.GetString(data);
+		Debug.Log("Resend: " + message);
+		sendCommand(Encoding.ASCII.GetBytes("r" + message));
+	}
+
+	private void inRechoCommand(byte[] data)
+	{
+		string message = Encoding.ASCII.GetString(data);
+		Debug.Log("Return echo complete: " + message);
+	}
+
+	void inRefreshCommand(byte[] data)
+	{
+		int value = BytestoInteger(data, 0);
+		Debug.Log("New value refresh :" + value);
+		cameras.refreshTime = value;
+	}
+
+	int receiveSizeCommand()
+	{
+		int len = 0;
+		byte[] buf = new byte[sizeof(Int32)];
+		while (len < sizeof(Int32))
+		{
+			if (sender.CanRead)
+			{
+				len += sender.Read(buf, len, sizeof(Int32) - len);
+			}
+		}
+		//Buff have size package
+		int size_command = BytestoInteger(buf, 0);
+		Debug.Log("Size package : " + size_command + " bytes.");
+		return size_command;
+	}
+
+	void receivePackage(out byte[] command)
+	{
+		int size_command = receiveSizeCommand();
+		command = new byte[size_command];
+		int len = 0;
+		//Loop full package
+		Debug.Log("Transfer...");
+		while (size_command > len)
+		{
+			if (sender.CanRead)
+			{
+				len += sender.Read(command, 0, command.Length - len);
+				if (len > command.Length)
+				{
+					Debug.LogError("Command too long");
+				}
+				Debug.Log(len + "/" + size_command + " bytes.");
+				Debug.Log(len / (double)size_command * 100 + "% done.");
+			}
+		}
+		Debug.Log("End transfer.");
 	}
 
     void networkCode()
@@ -130,78 +194,18 @@ public class Client : MonoBehaviour
 
 			using (sender = client.GetStream())
 			{
-				sendEcho("Ok echo");
-				//sendEcho(Encoding.ASCII.GetBytes("Ok 2 echo"));
-				//sendRefresh((int)cameras.refreshTime);
-				//sendCameras();
-				
+				sendRefresh((int)cameras.refreshTime);
+				sendCameras();
+
 				while (keepReading && client.Client.Connected)
 				{
-					// Data buffer for incoming data.
-					byte[] buf = new byte[bufferSize];
-					int len = 0;
-					int size_command = 0;
 
-					if (sender.CanRead)
+					if (sender.DataAvailable)
 					{
-						int read = 0;
-						while (len < sizeof(Int32))
-						{
-							Debug.Log("Waiting new command...");
-							read = sender.Read(buf, len, sizeof(Int32) - len);
-							len += read;
-						}
-
-						//Buff have size package
-						size_command = toInteger(buf, 0);
-						Debug.Log("Size package : " + size_command + " bytes.");
-						if (size_command > buf.Length)
-						{
-							bufferSize = size_command + 1;
-							Debug.Log("New size Buffer : " + bufferSize + " bytes.");
-							byte[] newbuf = new byte[bufferSize];
-							buf.CopyTo(newbuf, 0);
-							buf = newbuf;
-						}
-						len = 0;
-
-						//Loop full package
-						Debug.Log("Transfer...");
-						while (size_command > len)
-						{
-							Byte[] bytes = new byte[size_command];
-							sender.Read(bytes, 0, size_command);
-							string msg = Encoding.ASCII.GetString(bytes); //the message incoming
-							Debug.Log(msg);
-						}
-
-
-							/*
-							while (size_command > len)
-							{
-								read = sender.Read(buf, len, buf.Length - len);
-
-								string cmd = Encoding.ASCII.GetString(buf, len, buf.Length);
-								Debug.Log("Read = " + cmd);
-
-								len += read;
-								if (len >= buf.Length)
-								{
-									Debug.LogError("Buffer overflow");
-								}
-								Debug.Log(len +"/" + size_command + " bytes.");
-								Debug.Log(len/(double)size_command*100+ "% done.");
-							}
-
-							//Buff have package
-							Debug.Log("Package arrived.");
-
-							parseCommand(buf);
-							size_command = 0;
-							len = 0;
-							*/
-
-						}
+						byte[] command;
+						receivePackage(out command);
+						parseCommand(command);
+					}
 				}
 			}
 			Debug.Log("End connection...");
@@ -223,29 +227,9 @@ public class Client : MonoBehaviour
         }
     }
 
-	void inEchoCommand(byte[] data)
-	{
-		string message = Encoding.ASCII.GetString(data);
-		Debug.Log("Resend: " + message);
-		sendCommand(Encoding.ASCII.GetBytes("r" + message));
-	}
-
-	private void inRechoCommand(byte[] data)
-	{
-		string message = Encoding.ASCII.GetString(data);
-		Debug.Log("Return echo complete: " + message);
-	}
-
-	void inRefreshCommand(byte[] data)
-	{
-		int value = (int)BitConverter.ToInt32(data, 0);
-		Debug.Log("New value refresh :" + value);
-		cameras.refreshTime = value;
-	}
-
 	void sendCommand(byte[] data)
 	{
-		byte[] size = getInteger(data.Length);
+		byte[] size = getIntegerBytes(data.Length);
 		sender.Write(size, 0, size.Length);
 		sender.Write(data, 0, data.Length);
 	}
@@ -284,9 +268,9 @@ public class Client : MonoBehaviour
 
 		byte[] command = Combine(
 			Encoding.ASCII.GetBytes("s"),
-			getInteger(images[0].Length),
+			Encoding.ASCII.GetBytes(images[0].Length.ToString()),
 			images[0],
-			getInteger(images[1].Length),
+			Encoding.ASCII.GetBytes(images[1].Length.ToString()),
 			images[1]);
 
 		sendCommand(command);
@@ -295,11 +279,9 @@ public class Client : MonoBehaviour
 
 	void sendRefresh(int refresh_time)
 	{
-		byte[] command = Combine(
-		Encoding.ASCII.GetBytes("t"),
-		getInteger(refresh_time)); 
+		byte[] command = Encoding.ASCII.GetBytes("t" + refresh_time);
 		sendCommand(command);
-		Debug.Log("Refresh send.");
+		Debug.Log("Refresh send " + refresh_time+".");
 	}
 
 	void stopClient()
