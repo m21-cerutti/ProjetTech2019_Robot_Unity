@@ -35,6 +35,24 @@ public class Client : MonoBehaviour
         SocketThread.Start();
     }
 
+	bool CheckConnection()
+	{
+		if (client != null)
+		{
+			if (!client.Connected || !keepReading)
+			{
+				if (SocketThread != null)
+				{
+
+				}
+				return false;
+			}
+			return true;
+		}
+
+		return true;
+	}
+
 	private byte[] getIntegerBytes(int value)
 	{
 		return BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value));
@@ -133,7 +151,7 @@ public class Client : MonoBehaviour
 	{
 		int len = 0;
 		byte[] buf = new byte[sizeof(Int32)];
-		while (len < sizeof(Int32))
+		while (len < sizeof(Int32) && CheckConnection())
 		{
 			if (sender.CanRead)
 			{
@@ -153,7 +171,7 @@ public class Client : MonoBehaviour
 		int len = 0;
 		//Loop full package
 		Debug.Log("Transfer...");
-		while (size_command > len)
+		while (size_command > len && CheckConnection())
 		{
 			if (sender.CanRead)
 			{
@@ -171,7 +189,6 @@ public class Client : MonoBehaviour
 
     void networkCode()
     {
-
 		TcpClient client = new TcpClient(AddressFamily.InterNetwork);
 
         try
@@ -197,9 +214,8 @@ public class Client : MonoBehaviour
 				sendRefresh((int)cameras.refreshTime);
 				sendCameras();
 
-				while (keepReading && client.Client.Connected)
+				while (keepReading && CheckConnection())
 				{
-
 					if (sender.DataAvailable)
 					{
 						byte[] command;
@@ -208,7 +224,7 @@ public class Client : MonoBehaviour
 					}
 				}
 			}
-			Debug.Log("End connection...");
+			Debug.Log("End connection.");
 
 			// Release the socket.  
 			client.Close();
@@ -268,13 +284,15 @@ public class Client : MonoBehaviour
 
 		byte[] command = Combine(
 			Encoding.ASCII.GetBytes("s"),
-			Encoding.ASCII.GetBytes(images[0].Length.ToString()),
+			Encoding.ASCII.GetBytes(images[0].Length.ToString() + "\0"),
 			images[0],
-			Encoding.ASCII.GetBytes(images[1].Length.ToString()),
+			Encoding.ASCII.GetBytes(images[1].Length.ToString() + "\0"),
 			images[1]);
 
 		sendCommand(command);
 		Debug.Log("Img send.");
+		Debug.Log("Left size "+ images[0].Length + ".");
+		Debug.Log("Right size "+ images[1].Length + ".");
 	}
 
 	void sendRefresh(int refresh_time)
@@ -286,14 +304,14 @@ public class Client : MonoBehaviour
 
 	void stopClient()
     {
-        keepReading = false;
-
+		Debug.Log("Disconnected!");
+		keepReading = false;
         //stop thread
         if (SocketThread != null)
         {
             if (client != null && client.Connected)
             {
-                Debug.Log("Disconnected!");
+                
 				client.Client.Shutdown(SocketShutdown.Both);
 				client.Client.Close();
 				client.Close();
@@ -305,13 +323,5 @@ public class Client : MonoBehaviour
     void OnDisable()
     {
         stopClient();
-    }
-
-    void OnDestroy()
-    {
-        if (SocketThread != null)
-        {
-            SocketThread.Abort();
-        }
     }
 }

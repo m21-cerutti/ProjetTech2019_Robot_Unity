@@ -170,6 +170,7 @@ MonoBehaviour:
   left_cam: {fileID: 617817249197629816}
   right_cam: {fileID: 617817248618575412}
   distance_cam: 0.5
+  refreshTime: 20
 --- !u!114 &635046772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,8 +183,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 305d7d18f0fe5bd4e8632bfab47123e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  adressIp: 127.0.0.1
-  port: 5260
+  adressIp: 192.168.0.40
+  port: 9999
 --- !u!1 &617817248618575411
 GameObject:
   m_ObjectHideFlags: 0

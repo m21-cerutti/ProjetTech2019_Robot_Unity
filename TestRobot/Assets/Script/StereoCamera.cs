@@ -48,27 +48,32 @@ public class StereoCamera : MonoBehaviour
     [SerializeField]
     private float distance_cam = 0.5f;
 
-    public float refreshTime = 20f;
+    public float refreshTime = 30f;
+	float getRefreshTimeMs()
+	{
+		return refreshTime / 1000f;
+	}
+
 	private float timer;
 
 
     void Start()
     {
         SetCamerasDistance();
-        timer = refreshTime;
+        timer = getRefreshTimeMs();
         computeCamerasImages();
     }
 
-	void Update()
+	void LateUpdate()
 	{
         if (timer < 0)
         {
             computeCamerasImages();
-            timer = refreshTime;
+            timer = getRefreshTimeMs();
         }
         else
         {
-            timer -= Time.deltaTime;
+			timer -= Time.deltaTime;
         }
 	}
 
