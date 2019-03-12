@@ -427,16 +427,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7344361888254948836, guid: 9adbdf7f2943a4348a2d4cc6d884f50b,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4239346142971415889, guid: 9adbdf7f2943a4348a2d4cc6d884f50b,
-        type: 3}
-      propertyPath: m_Text
-      value: 
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9adbdf7f2943a4348a2d4cc6d884f50b, type: 3}
 --- !u!1001 &617817249378913064
@@ -505,6 +495,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 617817249197629816, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_LensShift.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 617817249197629816, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_NormalizedViewPortRect.width
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 617817248618575412, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_projectionMatrixMode
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e2acfafb8702cf14ca33214f096f4f02, type: 3}
