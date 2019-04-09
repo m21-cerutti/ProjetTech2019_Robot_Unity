@@ -36,7 +36,8 @@ public class MotorRobot : MonoBehaviour
     private void PerformMovement()
     {
         Vector3 velocity = transform.InverseTransformDirection(rb.velocity);
-        velocity.z = input.Forward * m_speed_translation_multiplier;
+		velocity.x = input.Aside * m_speed_translation_multiplier;
+		velocity.z = input.Forward * m_speed_translation_multiplier;
         rb.velocity = transform.TransformDirection(velocity);
     }
 

@@ -9,35 +9,28 @@ public class StereoCamera : MonoBehaviour
 {
    
     static readonly object _cameras = new object();
-    private byte[] cameraLeft;
+    private byte[] cameraLeft ;
     private byte[] cameraRight;
 
     public byte[][] getCamerasImages()
     {
-        lock (_cameras)
-        {
-            byte[][] cameras = new byte[2][];
-            byte[] left = new byte[cameraLeft.Length];
-            cameraLeft.CopyTo(left ,0);
-            byte[] right = new byte[cameraRight.Length];
-            cameraRight.CopyTo(right, 0);
-            cameras[0] = left;
-            cameras[1] = right;
-            return cameras;
-        }
-    }
+		byte[][] cameras = new byte[2][];
 
-    private bool compute = false;
-    private IEnumerator computeCamerasImages()
+		lock (_cameras)
+        {
+            cameras[0] = (byte[])cameraLeft.Clone();
+            cameras[1] = (byte[])cameraRight.Clone();
+        }
+		return cameras;
+	}
+	
+    private void computeCamerasImages()
     {
-        yield return null;
-        compute = true;
         lock (_cameras)
         {
             cameraLeft = GetCameraImage(left_cam);
             cameraRight = GetCameraImage(right_cam);
         }
-        compute = false;
     }
 
     private byte[] GetCameraImage(Camera cam)
@@ -78,15 +71,15 @@ public class StereoCamera : MonoBehaviour
     {
         SetCamerasPositions();
         timer = getRefreshTimeMs();
-        computeCamerasImages();
-    }
+		computeCamerasImages();
+	}
 
     private float timer;
     void LateUpdate()
 	{
-        if (timer < 0 && !compute)
+        if (timer < 0)
         {
-            StartCoroutine(computeCamerasImages());
+            computeCamerasImages();
             timer = getRefreshTimeMs();
         }
         else

@@ -19,12 +19,14 @@ public class Client : MonoBehaviour
     volatile bool keepReading = true;
 
 	StereoCamera cameras;
+	InputRobot input;
 
     // Use this for initialization
     void Start()
     {
         Application.runInBackground = true;
 		cameras = GetComponent<StereoCamera>();
+		input = GetComponent<InputRobot>();
 		startClient();
     }
 
@@ -33,15 +35,6 @@ public class Client : MonoBehaviour
         SocketThread = new System.Threading.Thread(networkCode);
         SocketThread.IsBackground = true;
         SocketThread.Start();
-    }
-
-    bool CheckConnection()
-    {
-        if (client == null) return false;
-        if (!client.Connected) return false;
-        if (SocketThread == null) return false;
-
-        return true;
     }
 
 	private byte[] getIntegerBytes(int value)
@@ -53,12 +46,21 @@ public class Client : MonoBehaviour
 	{
 		if(value.Length < sizeof(Int32))
 		{
-			throw new Exception("Not enough bytes to convert.");
+			throw new Exception("Not enough bytes to convert to integer.");
 		}
 		return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(value, offset));
 	}
 
-    private string getIPAddress()
+	private float BytestoFloat(byte[] value, int offset)
+	{
+		if (value.Length < sizeof(float))
+		{
+			throw new Exception("Not enough bytes to convert to float.");
+		}
+		return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(value, offset));
+	}
+
+	private string getIPAddress()
     {
         IPHostEntry host;
         string localIP = "";
@@ -87,7 +89,7 @@ public class Client : MonoBehaviour
 			Debug.LogError("Size 0.");
 		}
 		
-		string cmd = Encoding.ASCII.GetString(command, 0, command.Length);
+		string cmd = Encoding.ASCII.GetString(command, 0, 1);
 		Debug.Log("Command read = " + cmd);
 
 		byte[] data = command.Skip(1).ToArray();
@@ -101,6 +103,11 @@ public class Client : MonoBehaviour
 		else if (cmd.StartsWith("r"))
 		{
 			inRechoCommand(data);
+		}
+		//actualise control
+		else if (cmd.StartsWith("c"))
+		{
+			inControlsCommand(data);
 		}
 		//send camera
 		else if (cmd.StartsWith("i"))
@@ -138,6 +145,15 @@ public class Client : MonoBehaviour
 		cameras.refreshTime = value;
 	}
 
+	void inControlsCommand(byte[] data)
+	{
+		string message = Encoding.ASCII.GetString(data);
+		Debug.Log("Controls: " + message);
+		input.Forward = 0;
+		input.Aside = 0;
+		input.Rotation = 0;
+	}
+
 	int receiveSizeCommand()
 	{
 		int len = 0;
@@ -148,10 +164,6 @@ public class Client : MonoBehaviour
 			{
 				len += sender.Read(buf, len, sizeof(Int32) - len);
 			}
-            if (!CheckConnection())
-            {
-                throw new Exception("Connection closed during get size.");
-            }
         }
 		//Buff have size package
 		int size_command = BytestoInteger(buf, 0);
@@ -178,10 +190,6 @@ public class Client : MonoBehaviour
 				Debug.Log(len + "/" + size_command + " bytes.");
 				Debug.Log(len / (double)size_command * 100 + "% done.");
 			}
-            if(! CheckConnection())
-            {
-                throw new Exception("Connection closed during get command.");
-            }
 		}
 		Debug.Log("End transfer.");
 	}
@@ -217,11 +225,15 @@ public class Client : MonoBehaviour
                 {
                     if (sender.DataAvailable)
                     {
-                        byte[] command;
+						Debug.Log("New command.");
+						byte[] command;
                         receivePackage(out command);
                         parseCommand(command);
                     }
-                }
+					Thread.Sleep((int)cameras.refreshTime);
+					sendCameras();
+
+				}
             }
 			Debug.Log("End connection.");
 
@@ -280,6 +292,7 @@ public class Client : MonoBehaviour
 	void sendCameras()
 	{
 		byte[][] images = cameras.getCamerasImages();
+		Debug.Log("Send :" + images[0].Length);
 
 		byte[] command = Combine(
 			Encoding.ASCII.GetBytes("s"),
