@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 170076734}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -206,7 +206,7 @@ PrefabInstance:
     - target: {fileID: 789250891287242673, guid: 7380a91bac802ac4f860dd24c0bfdf1c,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 5.44
+      value: 3.97
       objectReference: {fileID: 0}
     - target: {fileID: 789250891287242673, guid: 7380a91bac802ac4f860dd24c0bfdf1c,
         type: 3}
@@ -458,6 +458,36 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3170228778539589274, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_Size.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3170228778539589274, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_Size.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3170228778539589274, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_Size.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 512505941896056668, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: distance_cam
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3170228780100986347, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3170228778449236644, guid: e2acfafb8702cf14ca33214f096f4f02,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.05
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e2acfafb8702cf14ca33214f096f4f02, type: 3}

@@ -132,8 +132,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 3, y: 1, z: 2.5}
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Size: {x: 2.5121288, y: 1, z: 2.1342444}
+  m_Center: {x: -0.03971052, y: 0.5, z: 0.032693624}
 --- !u!54 &197797999398579573
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -347,6 +347,18 @@ PrefabInstance:
     - target: {fileID: 400000, guid: 2ba95edf9fe939049af09ef8b3c803da, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 2ba95edf9fe939049af09ef8b3c803da, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 2ba95edf9fe939049af09ef8b3c803da, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 2ba95edf9fe939049af09ef8b3c803da, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2ba95edf9fe939049af09ef8b3c803da, type: 3}
