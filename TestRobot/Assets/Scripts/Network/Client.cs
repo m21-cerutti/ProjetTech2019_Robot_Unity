@@ -37,6 +37,12 @@ public class Client : MonoBehaviour
         SocketThread.Start();
     }
 
+	public void startClient(UnityEngine.UI.Text text)
+	{
+		adressIp = text.text;
+		startClient();
+	}
+
 	private byte[] getIntegerBytes(int value)
 	{
 		return BitConverter.GetBytes(IPAddress.HostToNetworkOrder(value));

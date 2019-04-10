@@ -12,30 +12,41 @@ public class ObserverMotor : MonoBehaviour
 
     [SerializeField] private GameObject viewCam;
 
-    private void Update()
+
+	private void Update()
     {
-        PerformMovement();
-        PerformRotation();
+        
 
-        if(ObserverController.XTouch)
-        {
-            viewCam.SetActive(!viewCam.activeSelf);
-        }
+		if (ObserverController.XTouch)
+		{
+			viewCam.SetActive(!viewCam.activeSelf);
+			if (viewCam.activeSelf)
+				Cursor.lockState = CursorLockMode.None;
+			else
+				Cursor.lockState = CursorLockMode.Locked;
+		}
 
-        if (ObserverController.Click_Down)
-        {
-            ///Click spawn
-            Ray ray = new Ray(transform.position, transform.TransformDirection(Vector3.forward));
-            RaycastHit hit = new RaycastHit();
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity))
-            {
-                if (hit.collider.gameObject.tag == "Terrain")
-                {
-                    Debug.DrawRay(hit.point, hit.normal * 10, Color.green);
-                    GameObject.FindGameObjectWithTag("Character").GetComponent<PathAI>().setTarget(hit.point);
-                }
-            }
-        }
+		if (!viewCam.activeSelf)
+		{
+			PerformMovement();
+			PerformRotation();
+
+			if (ObserverController.Click_Down)
+			{
+
+				///Click spawn
+				Ray ray = new Ray(transform.position, transform.TransformDirection(Vector3.forward));
+				RaycastHit hit = new RaycastHit();
+				if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+				{
+					if (hit.collider.gameObject.tag == "Terrain")
+					{
+						Debug.DrawRay(hit.point, hit.normal * 10, Color.green);
+						GameObject.FindGameObjectWithTag("Character").GetComponent<PathAI>().setTarget(hit.point);
+					}
+				}
+			}
+		}
 
         if (ObserverController.Cancel)
         {
