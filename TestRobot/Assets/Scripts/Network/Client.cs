@@ -51,15 +51,6 @@ public class Client : MonoBehaviour
 		return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(value, offset));
 	}
 
-	private float BytestoFloat(byte[] value, int offset)
-	{
-		if (value.Length < sizeof(float))
-		{
-			throw new Exception("Not enough bytes to convert to float.");
-		}
-		return IPAddress.NetworkToHostOrder(BitConverter.ToInt32(value, offset));
-	}
-
 	private string getIPAddress()
     {
         IPHostEntry host;
@@ -147,11 +138,12 @@ public class Client : MonoBehaviour
 
 	void inControlsCommand(byte[] data)
 	{
-		string message = Encoding.ASCII.GetString(data);
-		Debug.Log("Controls: " + message);
-		input.Forward = 0;
-		input.Aside = 0;
-		input.Rotation = 0;
+		string[] sep = { ";" };
+		string[] message = Encoding.ASCII.GetString(data).Split(sep, StringSplitOptions.RemoveEmptyEntries);
+		Debug.Log("Controls: \"" + message[0] +"\" \""+ message[1] + "\" \"" + message[2] +"\"");
+		input.Forward = Single.Parse(message[0], System.Globalization.CultureInfo.InvariantCulture);
+		input.Aside = Single.Parse(message[1], System.Globalization.CultureInfo.InvariantCulture);
+		input.Rotation = Single.Parse(message[2], System.Globalization.CultureInfo.InvariantCulture);
 	}
 
 	int receiveSizeCommand()
