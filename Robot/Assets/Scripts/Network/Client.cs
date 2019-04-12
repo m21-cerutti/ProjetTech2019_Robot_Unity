@@ -230,7 +230,6 @@ public class Client : MonoBehaviour
                     }
 					Thread.Sleep((int)cameras.refreshTime);
 					sendCameras();
-
 				}
             }
 			Debug.Log("End connection.");
