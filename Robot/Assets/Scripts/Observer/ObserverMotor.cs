@@ -15,8 +15,6 @@ public class ObserverMotor : MonoBehaviour
 
 	private void Update()
     {
-        
-
 		if (ObserverController.XTouch)
 		{
 			viewCam.SetActive(!viewCam.activeSelf);
@@ -66,7 +64,7 @@ public class ObserverMotor : MonoBehaviour
     private void PerformRotation()
     {
         float rotationX = transform.localEulerAngles.y + speed_angle_turn * ObserverController.MouseX;
-        rotationY += ObserverController.MouseY * speed_angle_turn;
+        rotationY += ObserverController.MouseY * speed_angle_up;
         rotationY = Mathf.Clamp(rotationY, -cameraRotationLimit, cameraRotationLimit);
         transform.localEulerAngles = new Vector3(-rotationY, rotationX, 0);
     }

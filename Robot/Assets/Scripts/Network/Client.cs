@@ -194,7 +194,7 @@ public class Client : MonoBehaviour
 
     void networkCode()
     {
-		TcpClient client = new TcpClient(AddressFamily.InterNetwork);
+		client = new TcpClient(AddressFamily.InterNetwork);
 
         try
         {
